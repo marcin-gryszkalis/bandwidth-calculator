@@ -26,13 +26,22 @@
             flex-direction: column;
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
+        .head {
+            white-space: pre;
+            text-align: left;
+            margin: 0 auto 20px auto;
+            width: fit-content;
             color: #fff;
-            font-weight: 300;
-            font-size: 1.8rem;
+            font-family: Hack, Source Code Pro, Cascadia Code, Consolas, monospace;
+            font-weight: 500;
+            font-size: 0.85rem;
             flex-shrink: 0;
+
+            text-shadow:
+                2px 2px 4px #dd0000,
+                4px 4px 5px #880088,
+                6px 6px 6px #0000ff,
+                8px 8px 7px #000088;
         }
 
         .calculator {
@@ -160,16 +169,26 @@
             font-family: 'Monaco', 'Consolas', monospace;
         }
 
-        .note {
+        .note, a {
             margin-top: 8px;
             color: #555;
             font-size: 0.75rem;
             font-family: 'Monaco', 'Consolas', monospace;
         }
+        a:hover {
+            color: #888;
+        }
     </style>
 </head>
 <body>
-    <h1>Bandwidth Calculator</h1>
+<div class="head">
+___.                      .___       .__    .___ __  .__                    .__               .__          __
+\_ |__ _____    ____    __| _/_  _  _|__| __| _//  |_|  |__     ____ _____  |  |   ____  __ __|  | _____ _/  |_  ___________
+ | __ \\__  \  /    \  / __ |\ \/ \/ /  |/ __ |\   __\  |  \  _/ ___\\__  \ |  | _/ ___\|  |  \  | \__  \\   __\/  _ \_  __ \
+ | \_\ \/ __ \|   |  \/ /_/ | \     /|  / /_/ | |  | |   Y  \ \  \___ / __ \|  |_\  \___|  |  /  |__/ __ \|  | (  <_> )  | \/
+ |___  (____  /___|  /\____ |  \/\_/ |__\____ | |__| |___|  /  \___  >____  /____/\___  >____/|____(____  /__|  \____/|__|
+     \/     \/     \/      \/                \/           \/       \/     \/          \/                \/
+</div>
 
     <div class="calculator">
         <div class="column">
@@ -201,6 +220,7 @@
         <p class="instructions">Enter values in any two fields to calculate the third</p>
         <!-- <p class="formula">Size = Bandwidth × Time</p> -->
         <p class="note">K = 2<sup>10</sup> = 1024, M = 2<sup>20</sup>, G = 2<sup>30</sup>, T = 2<sup>40</sup>, P = 2<sup>50</sup></p>
+        <p class="note"><a href="https://github.com/marcin-gryszkalis/bandwidth-calculator">https://github.com/marcin-gryszkalis/bandwidth-calculator</a></p>
     </div>
 
     <script>
