@@ -392,16 +392,19 @@
         function formatMultiUnitTime(seconds) {
             if (seconds === null || seconds <= 0) return null;
 
+            // Round to whole seconds
+            const roundedSeconds = Math.round(seconds);
+            if (roundedSeconds < 1) return null;
+
             const units = [
                 { unit: 'd', factor: 86400 },
                 { unit: 'h', factor: 3600 },
                 { unit: 'min', factor: 60 },
-                { unit: 's', factor: 1 },
-                { unit: 'ms', factor: 0.001 }
+                { unit: 's', factor: 1 }
             ];
 
             const parts = [];
-            let remaining = seconds;
+            let remaining = roundedSeconds;
 
             for (const { unit, factor } of units) {
                 if (remaining >= factor) {
@@ -409,14 +412,6 @@
                     parts.push(`${count} ${unit}`);
                     remaining -= count * factor;
                 }
-            }
-
-            // Handle sub-millisecond
-            if (parts.length === 0 && seconds > 0) {
-                if (seconds >= 1e-6) {
-                    return formatNumber(seconds * 1e6, true) + ' μs';
-                }
-                return formatNumber(seconds * 1e9, true) + ' ns';
             }
 
             return parts.length > 0 ? parts.join(' ') : null;
@@ -442,7 +437,8 @@
                 if (multiUnit) {
                     const div = document.createElement('div');
                     div.className = 'conversion-item';
-                    div.innerHTML = `<span class="value"><span class="int-part">${multiUnit}</span><span class="dec-part"></span></span><span class="unit">(combined)</span>`;
+                    div.style.justifyContent = 'center';
+                    div.innerHTML = `<span class="value" style="min-width: auto;">${multiUnit}</span>`;
                     container.appendChild(div);
                 }
             }
