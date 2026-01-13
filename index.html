@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bandwidth Calculator</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1a2e'/><circle cx='8' cy='16' r='3' fill='%234a9eff'/><circle cx='24' cy='8' r='3' fill='%234ade80'/><circle cx='24' cy='24' r='3' fill='%234ade80'/><line x1='11' y1='16' x2='21' y2='9' stroke='%234a9eff' stroke-width='2' stroke-linecap='round'/><line x1='11' y1='16' x2='21' y2='23' stroke='%234a9eff' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='16' r='1.5' fill='%234a9eff' opacity='0.6'/></svg>">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100%;
+            padding: 20px;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 300;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .calculator {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex: 1;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .calculator {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+        }
+
+        .column {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .column h2 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 15px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .column input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            text-align: center;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .column input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+        }
+
+        .column input.calculated {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .column input::placeholder {
+            color: #666;
+        }
+
+        .conversions {
+            margin-top: 15px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .conversion-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 4px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .conversion-item .value {
+            color: #4a9eff;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .conversion-item .unit {
+            color: #888;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            flex-shrink: 0;
+        }
+
+        .instructions {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .formula {
+            margin-top: 10px;
+            color: #4a9eff;
+            font-size: 0.8rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .note {
+            margin-top: 8px;
+            color: #555;
+            font-size: 0.75rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bandwidth Calculator</h1>
+
+    <div class="calculator">
+        <div class="column">
+            <h2>Size</h2>
+            <div class="input-wrapper">
+                <input type="text" id="size" placeholder="e.g. 1GB, 500MB" tabindex="1">
+            </div>
+            <div class="conversions" id="size-conversions"></div>
+        </div>
+
+        <div class="column">
+            <h2>Time</h2>
+            <div class="input-wrapper">
+                <input type="text" id="time" placeholder="e.g. 30s, 5m" tabindex="2">
+            </div>
+            <div class="conversions" id="time-conversions"></div>
+        </div>
+
+        <div class="column">
+            <h2>Bandwidth</h2>
+            <div class="input-wrapper">
+                <input type="text" id="bandwidth" placeholder="e.g. 100Mbps, 1Gbps" tabindex="3">
+            </div>
+            <div class="conversions" id="bandwidth-conversions"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p class="instructions">Enter values in any two fields to calculate the third</p>
+        <p class="formula">Size = Bandwidth × Time</p>
+        <p class="note">K = 2<sup>10</sup> = 1024, M = 2<sup>20</sup>, G = 2<sup>30</sup>, T = 2<sup>40</sup>, P = 2<sup>50</sup></p>
+    </div>
+
+    <script>
+        const K = 1024;
+        const M = K * K;
+        const G = M * K;
+        const T = G * K;
+        const P = T * K;
+
+        // Unit definitions: case-sensitive for bits (b) vs bytes (B)
+        const sizeUnits = [
+            { pattern: 'b', factor: 1/8 },
+            { pattern: 'B', factor: 1 },
+            { pattern: 'Kb', factor: K/8 },
+            { pattern: 'KB', factor: K },
+            { pattern: 'Mb', factor: M/8 },
+            { pattern: 'MB', factor: M },
+            { pattern: 'Gb', factor: G/8 },
+            { pattern: 'GB', factor: G },
+            { pattern: 'Tb', factor: T/8 },
+            { pattern: 'TB', factor: T },
+            { pattern: 'Pb', factor: P/8 },
+            { pattern: 'PB', factor: P }
+        ];
+
+        const timeUnits = [
+            { pattern: 'ns', factor: 1e-9 },
+            { pattern: 'us', factor: 1e-6 },
+            { pattern: 'μs', factor: 1e-6 },
+            { pattern: 'ms', factor: 0.001 },
+            { pattern: 's', factor: 1 },
+            { pattern: 'sec', factor: 1 },
+            { pattern: 'm', factor: 60 },
+            { pattern: 'min', factor: 60 },
+            { pattern: 'h', factor: 3600 },
+            { pattern: 'hr', factor: 3600 },
+            { pattern: 'hour', factor: 3600 },
+            { pattern: 'd', factor: 86400 },
+            { pattern: 'day', factor: 86400 }
+        ];
+
+        const bandwidthUnits = [
+            { pattern: 'bps', factor: 1/8 },
+            { pattern: 'Bps', factor: 1 },
+            { pattern: 'Kbps', factor: K/8 },
+            { pattern: 'KBps', factor: K },
+            { pattern: 'Mbps', factor: M/8 },
+            { pattern: 'MBps', factor: M },
+            { pattern: 'Gbps', factor: G/8 },
+            { pattern: 'GBps', factor: G },
+            { pattern: 'Tbps', factor: T/8 },
+            { pattern: 'TBps', factor: T }
+        ];
+
+        const sizeDisplayUnits = [
+            { unit: 'b', label: 'bits', factor: 1/8 },
+            { unit: 'B', label: 'bytes', factor: 1 },
+            { unit: 'Kb', label: 'kilobits', factor: K/8 },
+            { unit: 'KB', label: 'kilobytes', factor: K },
+            { unit: 'Mb', label: 'megabits', factor: M/8 },
+            { unit: 'MB', label: 'megabytes', factor: M },
+            { unit: 'Gb', label: 'gigabits', factor: G/8 },
+            { unit: 'GB', label: 'gigabytes', factor: G },
+            { unit: 'Tb', label: 'terabits', factor: T/8 },
+            { unit: 'TB', label: 'terabytes', factor: T },
+            { unit: 'Pb', label: 'petabits', factor: P/8 },
+            { unit: 'PB', label: 'petabytes', factor: P }
+        ];
+
+        // Bytes-only units for calculated size output
+        const sizeOutputUnits = [
+            { unit: 'B', label: 'bytes', factor: 1 },
+            { unit: 'KB', label: 'kilobytes', factor: K },
+            { unit: 'MB', label: 'megabytes', factor: M },
+            { unit: 'GB', label: 'gigabytes', factor: G },
+            { unit: 'TB', label: 'terabytes', factor: T },
+            { unit: 'PB', label: 'petabytes', factor: P }
+        ];
+
+        const timeDisplayUnits = [
+            { unit: 'ns', label: 'nanoseconds', factor: 1e-9 },
+            { unit: 'μs', label: 'microseconds', factor: 1e-6 },
+            { unit: 'ms', label: 'milliseconds', factor: 0.001 },
+            { unit: 's', label: 'seconds', factor: 1 },
+            { unit: 'm', label: 'minutes', factor: 60 },
+            { unit: 'h', label: 'hours', factor: 3600 },
+            { unit: 'd', label: 'days', factor: 86400 }
+        ];
+
+        const bandwidthDisplayUnits = [
+            { unit: 'bps', label: 'bits/sec', factor: 1/8 },
+            { unit: 'Bps', label: 'bytes/sec', factor: 1 },
+            { unit: 'Kbps', label: 'kilobits/sec', factor: K/8 },
+            { unit: 'KBps', label: 'kilobytes/sec', factor: K },
+            { unit: 'Mbps', label: 'megabits/sec', factor: M/8 },
+            { unit: 'MBps', label: 'megabytes/sec', factor: M },
+            { unit: 'Gbps', label: 'gigabits/sec', factor: G/8 },
+            { unit: 'GBps', label: 'gigabytes/sec', factor: G },
+            { unit: 'Tbps', label: 'terabits/sec', factor: T/8 },
+            { unit: 'TBps', label: 'terabytes/sec', factor: T }
+        ];
+
+        function parseValue(input, units) {
+            if (!input || !input.trim()) return null;
+            const match = input.trim().match(/^([\d.]+)\s*([a-zA-Zμ\/]+)$/);
+            if (!match) return null;
+
+            const value = parseFloat(match[1]);
+            const unitStr = match[2];
+
+            // First try exact match
+            for (const { pattern, factor } of units) {
+                if (pattern === unitStr) {
+                    return value * factor;
+                }
+            }
+
+            // Then try case-insensitive match for prefix, but preserve b/B distinction
+            const lastChar = unitStr.slice(-1);
+            const hasPs = unitStr.toLowerCase().endsWith('ps');
+
+            for (const { pattern, factor } of units) {
+                if (hasPs) {
+                    // For bandwidth units like Mbps, MBps
+                    if (pattern.toLowerCase() === unitStr.toLowerCase()) {
+                        // Check if bytes (B) vs bits (b) matches
+                        const patternHasUpperB = pattern.includes('Bp') || pattern === 'Bps';
+                        const inputHasUpperB = unitStr.includes('Bp') || unitStr === 'Bps';
+                        if (patternHasUpperB === inputHasUpperB) {
+                            return value * factor;
+                        }
+                    }
+                } else {
+                    // For size units like MB, Mb
+                    const patternLastChar = pattern.slice(-1);
+                    if (pattern.toLowerCase() === unitStr.toLowerCase() && patternLastChar === lastChar) {
+                        return value * factor;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function formatNumber(num) {
+            if (num === 0) return '0';
+
+            const abs = Math.abs(num);
+
+            if (abs >= 1) {
+                if (abs >= 1e15) {
+                    return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                }
+                if (abs >= 1000) {
+                    return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                }
+                return num.toLocaleString('en-US', { maximumFractionDigits: 3 });
+            }
+
+            if (abs >= 0.001) {
+                return num.toFixed(6).replace(/\.?0+$/, '');
+            }
+            if (abs >= 0.000001) {
+                return num.toFixed(9).replace(/\.?0+$/, '');
+            }
+            return num.toFixed(12).replace(/\.?0+$/, '');
+        }
+
+        function updateConversions(containerId, valueInBytes, displayUnits) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (valueInBytes === null) return;
+
+            for (const { unit, label, factor } of displayUnits) {
+                const converted = valueInBytes / factor;
+                const div = document.createElement('div');
+                div.className = 'conversion-item';
+                div.innerHTML = `<span class="value">${formatNumber(converted)}</span><span class="unit">${unit} (${label})</span>`;
+                container.appendChild(div);
+            }
+        }
+
+        function formatBestUnit(valueInBytes, displayUnits) {
+            if (valueInBytes === null || valueInBytes === 0) return '';
+
+            // Find the unit with smallest value >= 1, or first unit if all < 1
+            let best = null;
+            let bestValue = Infinity;
+
+            for (const item of displayUnits) {
+                const converted = valueInBytes / item.factor;
+                if (converted >= 1 && converted < bestValue) {
+                    best = item;
+                    bestValue = converted;
+                }
+            }
+
+            // If no unit gives value >= 1, use the first (smallest) unit
+            if (best === null) {
+                best = displayUnits[0];
+            }
+
+            const converted = valueInBytes / best.factor;
+            return formatNumber(converted) + ' ' + best.unit;
+        }
+
+        const sizeInput = document.getElementById('size');
+        const timeInput = document.getElementById('time');
+        const bandwidthInput = document.getElementById('bandwidth');
+
+        let lastEdited = [];
+        let currentlyFocused = null;
+
+        function trackEdit(field) {
+            lastEdited = lastEdited.filter(f => f !== field);
+            lastEdited.unshift(field);
+            if (lastEdited.length > 2) lastEdited.pop();
+        }
+
+        function calculate() {
+            const size = parseValue(sizeInput.value, sizeUnits);
+            const time = parseValue(timeInput.value, timeUnits);
+            const bandwidth = parseValue(bandwidthInput.value, bandwidthUnits);
+
+            sizeInput.classList.remove('calculated');
+            timeInput.classList.remove('calculated');
+            bandwidthInput.classList.remove('calculated');
+
+            const hasSize = size !== null;
+            const hasTime = time !== null;
+            const hasBandwidth = bandwidth !== null;
+
+            let calcSize = size;
+            let calcTime = time;
+            let calcBandwidth = bandwidth;
+
+            let targetField = null;
+            let targetValue = null;
+            let targetUnits = null;
+            let targetInput = null;
+
+            if (hasSize && hasTime && !hasBandwidth) {
+                calcBandwidth = size / time;
+                targetField = 'bandwidth';
+                targetValue = calcBandwidth;
+                targetUnits = bandwidthDisplayUnits;
+                targetInput = bandwidthInput;
+            } else if (hasSize && hasBandwidth && !hasTime) {
+                calcTime = size / bandwidth;
+                targetField = 'time';
+                targetValue = calcTime;
+                targetUnits = timeDisplayUnits;
+                targetInput = timeInput;
+            } else if (hasTime && hasBandwidth && !hasSize) {
+                calcSize = bandwidth * time;
+                targetField = 'size';
+                targetValue = calcSize;
+                targetUnits = sizeOutputUnits;
+                targetInput = sizeInput;
+            } else if (hasSize && hasTime && hasBandwidth) {
+                if (lastEdited.length >= 2) {
+                    const toCalculate = ['size', 'time', 'bandwidth'].find(f => !lastEdited.includes(f));
+                    if (toCalculate === 'size') {
+                        calcSize = bandwidth * time;
+                        targetField = 'size';
+                        targetValue = calcSize;
+                        targetUnits = sizeOutputUnits;
+                        targetInput = sizeInput;
+                    } else if (toCalculate === 'time') {
+                        calcTime = size / bandwidth;
+                        targetField = 'time';
+                        targetValue = calcTime;
+                        targetUnits = timeDisplayUnits;
+                        targetInput = timeInput;
+                    } else {
+                        calcBandwidth = size / time;
+                        targetField = 'bandwidth';
+                        targetValue = calcBandwidth;
+                        targetUnits = bandwidthDisplayUnits;
+                        targetInput = bandwidthInput;
+                    }
+                }
+            }
+
+            if (targetInput && currentlyFocused !== targetInput) {
+                targetInput.value = formatBestUnit(targetValue, targetUnits);
+                targetInput.classList.add('calculated');
+            }
+
+            updateConversions('size-conversions', calcSize, sizeDisplayUnits);
+            updateConversions('time-conversions', calcTime, timeDisplayUnits);
+            updateConversions('bandwidth-conversions', calcBandwidth, bandwidthDisplayUnits);
+        }
+
+        sizeInput.addEventListener('input', () => { trackEdit('size'); calculate(); });
+        timeInput.addEventListener('input', () => { trackEdit('time'); calculate(); });
+        bandwidthInput.addEventListener('input', () => { trackEdit('bandwidth'); calculate(); });
+
+        sizeInput.addEventListener('focus', () => { currentlyFocused = sizeInput; });
+        timeInput.addEventListener('focus', () => { currentlyFocused = timeInput; });
+        bandwidthInput.addEventListener('focus', () => { currentlyFocused = bandwidthInput; });
+
+        sizeInput.addEventListener('blur', () => { currentlyFocused = null; calculate(); });
+        timeInput.addEventListener('blur', () => { currentlyFocused = null; calculate(); });
+        bandwidthInput.addEventListener('blur', () => { currentlyFocused = null; calculate(); });
+    </script>
+</body>
+</html>
