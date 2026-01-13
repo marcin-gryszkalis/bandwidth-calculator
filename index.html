@@ -125,6 +125,17 @@
         .conversion-item .value {
             color: #4a9eff;
             font-family: 'Monaco', 'Consolas', monospace;
+            display: inline-flex;
+            min-width: 140px;
+        }
+
+        .conversion-item .value .int-part {
+            text-align: right;
+            flex: 1;
+        }
+
+        .conversion-item .value .dec-part {
+            text-align: left;
         }
 
         .conversion-item .unit {
@@ -367,6 +378,17 @@
             return result;
         }
 
+        function formatNumberAligned(num) {
+            const str = formatNumber(num, true);
+            const dotIndex = str.indexOf('.');
+            if (dotIndex === -1) {
+                return `<span class="int-part">${str}</span><span class="dec-part"></span>`;
+            }
+            const intPart = str.substring(0, dotIndex);
+            const decPart = str.substring(dotIndex);
+            return `<span class="int-part">${intPart}</span><span class="dec-part">${decPart}</span>`;
+        }
+
         function formatMultiUnitTime(seconds) {
             if (seconds === null || seconds <= 0) return null;
 
@@ -410,7 +432,7 @@
                 const converted = valueInBytes / factor;
                 const div = document.createElement('div');
                 div.className = 'conversion-item';
-                div.innerHTML = `<span class="value">${formatNumber(converted, true)}</span><span class="unit">${unit} (${label})</span>`;
+                div.innerHTML = `<span class="value">${formatNumberAligned(converted)}</span><span class="unit">${unit} (${label})</span>`;
                 container.appendChild(div);
             }
 
@@ -420,7 +442,7 @@
                 if (multiUnit) {
                     const div = document.createElement('div');
                     div.className = 'conversion-item';
-                    div.innerHTML = `<span class="value">${multiUnit}</span><span class="unit">(combined)</span>`;
+                    div.innerHTML = `<span class="value"><span class="int-part">${multiUnit}</span><span class="dec-part"></span></span><span class="unit">(combined)</span>`;
                     container.appendChild(div);
                 }
             }
