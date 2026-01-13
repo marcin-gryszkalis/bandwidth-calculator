@@ -188,7 +188,7 @@
 
     <div class="footer">
         <p class="instructions">Enter values in any two fields to calculate the third</p>
-        <p class="formula">Size = Bandwidth × Time</p>
+        <!-- <p class="formula">Size = Bandwidth × Time</p> -->
         <p class="note">K = 2<sup>10</sup> = 1024, M = 2<sup>20</sup>, G = 2<sup>30</sup>, T = 2<sup>40</sup>, P = 2<sup>50</sup></p>
     </div>
 
@@ -274,7 +274,7 @@
             { unit: 'μs', label: 'microseconds', factor: 1e-6 },
             { unit: 'ms', label: 'milliseconds', factor: 0.001 },
             { unit: 's', label: 'seconds', factor: 1 },
-            { unit: 'm', label: 'minutes', factor: 60 },
+            { unit: 'min', label: 'minutes', factor: 60 },
             { unit: 'h', label: 'hours', factor: 3600 },
             { unit: 'd', label: 'days', factor: 86400 }
         ];
@@ -334,31 +334,73 @@
             return null;
         }
 
-        function formatNumber(num) {
+        function formatNumber(num, useGroupSeparator = false) {
             if (num === 0) return '0';
 
             const abs = Math.abs(num);
+            let result;
 
             if (abs >= 1) {
                 if (abs >= 1e15) {
-                    return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                    result = num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                } else if (abs >= 1000) {
+                    result = num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                } else {
+                    result = num.toLocaleString('en-US', { maximumFractionDigits: 3 });
                 }
-                if (abs >= 1000) {
-                    return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                }
-                return num.toLocaleString('en-US', { maximumFractionDigits: 3 });
+            } else if (abs >= 0.001) {
+                result = num.toFixed(6).replace(/\.?0+$/, '');
+            } else if (abs >= 0.000001) {
+                result = num.toFixed(9).replace(/\.?0+$/, '');
+            } else {
+                result = num.toFixed(12).replace(/\.?0+$/, '');
             }
 
-            if (abs >= 0.001) {
-                return num.toFixed(6).replace(/\.?0+$/, '');
+            if (useGroupSeparator) {
+                // Replace comma with nbsp
+                result = result.replace(/,/g, '\u00A0');
+            } else {
+                // Remove commas entirely
+                result = result.replace(/,/g, '');
             }
-            if (abs >= 0.000001) {
-                return num.toFixed(9).replace(/\.?0+$/, '');
-            }
-            return num.toFixed(12).replace(/\.?0+$/, '');
+
+            return result;
         }
 
-        function updateConversions(containerId, valueInBytes, displayUnits) {
+        function formatMultiUnitTime(seconds) {
+            if (seconds === null || seconds <= 0) return null;
+
+            const units = [
+                { unit: 'd', factor: 86400 },
+                { unit: 'h', factor: 3600 },
+                { unit: 'min', factor: 60 },
+                { unit: 's', factor: 1 },
+                { unit: 'ms', factor: 0.001 }
+            ];
+
+            const parts = [];
+            let remaining = seconds;
+
+            for (const { unit, factor } of units) {
+                if (remaining >= factor) {
+                    const count = Math.floor(remaining / factor);
+                    parts.push(`${count} ${unit}`);
+                    remaining -= count * factor;
+                }
+            }
+
+            // Handle sub-millisecond
+            if (parts.length === 0 && seconds > 0) {
+                if (seconds >= 1e-6) {
+                    return formatNumber(seconds * 1e6, true) + ' μs';
+                }
+                return formatNumber(seconds * 1e9, true) + ' ns';
+            }
+
+            return parts.length > 0 ? parts.join(' ') : null;
+        }
+
+        function updateConversions(containerId, valueInBytes, displayUnits, isTime = false) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
 
@@ -368,8 +410,19 @@
                 const converted = valueInBytes / factor;
                 const div = document.createElement('div');
                 div.className = 'conversion-item';
-                div.innerHTML = `<span class="value">${formatNumber(converted)}</span><span class="unit">${unit} (${label})</span>`;
+                div.innerHTML = `<span class="value">${formatNumber(converted, true)}</span><span class="unit">${unit} (${label})</span>`;
                 container.appendChild(div);
+            }
+
+            // Add multi-unit time representation at the bottom
+            if (isTime) {
+                const multiUnit = formatMultiUnitTime(valueInBytes);
+                if (multiUnit) {
+                    const div = document.createElement('div');
+                    div.className = 'conversion-item';
+                    div.innerHTML = `<span class="value">${multiUnit}</span><span class="unit">(combined)</span>`;
+                    container.appendChild(div);
+                }
             }
         }
 
@@ -481,7 +534,7 @@
             }
 
             updateConversions('size-conversions', calcSize, sizeDisplayUnits);
-            updateConversions('time-conversions', calcTime, timeDisplayUnits);
+            updateConversions('time-conversions', calcTime, timeDisplayUnits, true);
             updateConversions('bandwidth-conversions', calcBandwidth, bandwidthDisplayUnits);
         }
 
